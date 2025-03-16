@@ -1,0 +1,184 @@
+
+workspace "FoodStore" "Онлайн-магазин фермерского хозяйства"{
+
+    model {
+        
+        //------------------------------------------------------------------------
+
+        //People in system
+        
+        //------------------------------------------------------------------------
+
+        unauthorized_user = person "Внешний пользователь" "Клиент магазина без учетной записи в системе"{
+            tags "Unauthorized user"
+        }
+        authorized_user = person "Пользователь системы" "Клиент, обладающий личной учетной записью в системе"
+        admin = person "Администратор" "Пользователь, регулирующий управление системой"
+        
+        //------------------------------------------------------------------------
+        
+        // Software systems
+        
+        //------------------------------------------------------------------------
+
+        
+        //External systems
+        
+        payment_sys = softwareSystem "YandexPay" "Внешняя платежная система"{
+            tags "External entity"
+        }
+        
+        email_sender = softwareSystem "Unisender" "Система для рассылки писем"{
+            tags "External entity"
+        }
+        
+        delivery_sys = softwareSystem "YandexDelivery" "Внешняя система доставки"{
+            tags "External entity"
+        }
+        
+        // FoodStore systems
+        
+        food_store = softwareSystem "FoodStore" "Система для онлайн-торговли продуктами"{
+            
+            //Client App
+            webApplication = container "Web Application" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            
+            //Backend services
+            
+            authService = container "AuthService" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            productService = container "ProductService" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            cartService = container "CartService" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            orderService = container "OrderService" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            paymentService = container "PaymentService" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            EmailService = container "emailService" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            DeliveryService = container "deliveryService" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            ReviewService = container "reviewService" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            ESB = container "ESB" "Предоставляет доступ к функционалу платформы согласно ролевой модели." "JavaScript and React"
+            db = container "DataBase" "База данных"{
+            tags "db"
+        }
+        }
+        
+        
+        
+        // Container relations
+        
+        unauthorized_user -> webApplication "Просматривает каталог товаров.\n\Просматривает акционное предложение." "JSON/HTTPS"
+        authorized_user -> webApplication "Просматривает, заказывает товары, производит оплату, оставляет отзывы." "JSON/HTTPS"
+        admin -> webApplication "Редактирует каталог товаров.\n\Просматривает отзывы." "JSON/HTTPS"
+
+        webApplication -> ESB "Направляет запрос пользователя к нужному сервису." "JSON/HTTPS"
+        
+        ESB -> authService "Регистрация/Авторизация пользователя" "JSON/HTTPS"
+        authService -> db "CRUD-операции с пользователями" "JSON/HTTPS"
+        
+        ESB -> productService "Получение данных о продуктах" "JSON/HTTPS"
+        productService -> db "CRUD-операции с продуктами" "JSON/HTTPS"
+
+        ESB -> cartService "Запись данных о продуктах в корзине" "JSON/HTTPS"
+        cartService -> db "CRUD-операции с корзиной" "JSON/HTTPS"
+
+        ESB -> orderService "Оформление заказа" "JSON/HTTPS"
+        orderService -> db "CRUD-операции с заказами" "JSON/HTTPS"
+
+        orderService -> paymentService "Получение информации об оплате" "JSON/HTTPS"
+        orderService -> db "Сохранение информации об оплате" "JSON/HTTPS"
+        paymentService -> payment_sys "Оплата заказа" "JSON/HTTPS"
+
+
+        orderService -> EmailService "Формирование сообщений клиенту" "JSON/HTTPS"
+        orderService -> db "Сохранение сообщений" "JSON/HTTPS"
+        orderService -> email_sender "Отправка сообщений клиенту" "JSON/HTTPS"
+
+
+        orderService -> DeliveryService "Получение информации о доставке" "JSON/HTTPS"
+        orderService -> db "Сохранение информации о доставленных заказах" "JSON/HTTPS"
+        orderService -> delivery_sys "Доставка заказа клиенту" "JSON/HTTPS"
+
+        
+        ESB -> ReviewService "CRUD-операции с данными" "JSON/HTTPS"
+        ReviewService -> db "CRUD-операции с отзывами" "JSON/HTTPS"
+
+
+        
+        
+        
+        
+        
+        // Contex Relations
+        
+        authorized_user -> food_store "Просматривает каталог товаров.\n\
+                                            Откладывает товары в козину.\n\
+                                            Совершает покупку."
+        
+        unauthorized_user -> food_store "Просматривает каталог товаров.\n\
+                                            Просматривает акционные предложения"
+                                            
+        admin -> food_store "Ведет учет товаров.\n\
+                                Просматривает отзывы пользователей."
+        
+        food_store -> payment_sys "Получает результаты оплаты"
+        food_store -> email_sender "Осуществляет отправку e-mail сообщений пользователям"
+        food_store -> delivery_sys "Осуществляет доставку заказа пользователю"
+        
+        
+
+    }
+
+    views {
+    
+    
+        
+        systemContext food_store {
+            include *
+            
+            
+            
+            //autoLayout
+            description "Контекстная диаграмма FoodStore"
+            properties {
+                structurizr.groups false
+            }
+        }
+        
+        container food_store {
+            include *
+            
+            
+            
+            //autoLayout
+            
+            description "Диаграмма контейнеров FoodStore"
+        }
+        
+        styles {
+        
+            element "Unauthorized user"{
+            background #898989
+            color #ffffff
+            shape Person
+            }
+            
+            element "External entity"{
+            background #898989
+            color #ffffff
+            shape RoundedBox
+            }
+            
+            element "db"{
+            shape Cylinder
+            }
+            
+        }
+        
+        theme default
+        
+       
+     
+       
+        
+        
+       
+    }
+
+}

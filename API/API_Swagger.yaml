@@ -1,0 +1,461 @@
+openapi: 3.0.0
+info:
+  title: Simple Inventory API
+  description: This is a simple API for FoodStore webmarket
+  contact:
+    email: you@your-company.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/MaximDvornik/FoodStore/1.0.0
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: users
+  description: пользователи системы без личной учетной записи
+- name: clients
+  description: "пользователи системы, имеющие личную учетную запись"
+- name: admins
+  description: администраторы системы
+paths:
+  /products:
+    get:
+      tags:
+      - user
+      - client
+      summary: Просмотр всех товаров
+      description: Получение списка всех товаров в магазине с поддержкой пагинации и сортировки.
+      parameters:
+      - name: page
+        in: query
+        description: Номер страницы для пагинации.
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Количество товаров на странице.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 10
+      - name: sort_by
+        in: query
+        description: "Поле для сортировки (price, name)."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: name
+          enum:
+          - price
+          - name
+      - name: order
+        in: query
+        description: Порядок сортировки.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: desc
+          enum:
+          - asc
+          - desc
+      responses:
+        "200":
+          description: Список товаров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/product'
+        "500":
+          description: Внутренняя ошибка сервера
+    post:
+      tags:
+      - admins
+      summary: Добавить товар
+      description: Добавить новый товар в каталог
+      operationId: addProduct
+      requestBody:
+        description: Новый товар для добавления в каталог
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/productNew'
+        required: true
+      responses:
+        "201":
+          description: товар добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_201'
+        "400":
+          description: некорректный ввод
+        "409":
+          description: такой товар уже существует
+      security:
+      - bearerAuth: []
+  /profile:
+    post:
+      tags:
+      - clients
+      summary: Изменить информацию об учетной записи
+      description: Изменить информацию об учетной записи
+      operationId: patchProfile
+      requestBody:
+        description: Новая информация о профиле пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/profile_body'
+        required: true
+      responses:
+        "200":
+          description: Успешное изменение профиля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "400":
+          description: Некорректный ввод данных
+        "401":
+          description: Неавторизованный пользователь
+        "403":
+          description: Отсутствует доступ к данному ресурсу
+        "404":
+          description: Пользователь с данным профилем не найден
+      security:
+      - bearerAuth:
+        - eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjEyMzQiLCJ1c2VybmFtZSI6ImJpcnNjaG5lcnNvZXZfaGVsbG9fc2VjdXJpdHkiLCJyb2xlIjoidXNlciJ9.cZL6FJ2EKzK4gSKpPVo5v6poE1T9m3MxoA3on8RHkJ2I
+  /login:
+    post:
+      tags:
+      - user
+      summary: Вход пользователя в систему
+      description: Аутентификация пользователя с использованием логина и пароля.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/login_body'
+        required: true
+      responses:
+        "200":
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+        "400":
+          description: Некорректный запрос
+        "401":
+          description: Неверные данные для входа
+        "500":
+          description: Внутренняя ошибка сервера
+  /reviews/{id}:
+    delete:
+      tags:
+      - clients
+      summary: Удаление отзыва
+      operationId: deleteReview
+      parameters:
+      - name: id
+        in: path
+        description: "Идентификатор отзыва, который нужно удалить"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          example: 1
+      responses:
+        "200":
+          description: Отзыв удален
+        "400":
+          description: Некорректные данные
+        "404":
+          description: Отзыв не найден
+        "500":
+          description: Внутренняя ошибка сервера
+      security:
+      - bearerAuth: []
+  /inventory:
+    get:
+      tags:
+      - developers
+      summary: searches inventory
+      description: |
+        By passing in the appropriate options, you can search for
+        available inventory in the system
+      operationId: searchInventory
+      parameters:
+      - name: searchString
+        in: query
+        description: pass an optional search string for looking up inventory
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: skip
+        in: query
+        description: number of records to skip for pagination
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+          format: int32
+      - name: limit
+        in: query
+        description: maximum number of records to return
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          minimum: 0
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InventoryItem'
+        "400":
+          description: bad input parameter
+    post:
+      tags:
+      - admins
+      summary: adds an inventory item
+      description: Adds an item to the system
+      operationId: addInventory
+      requestBody:
+        description: Inventory item to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryItem'
+      responses:
+        "201":
+          description: item created
+        "400":
+          description: "invalid input, object invalid"
+        "409":
+          description: an existing item already exists
+components:
+  schemas:
+    productNew:
+      required:
+      - category_id
+      - count_of_warehouse
+      - description
+      - discount_id
+      - image_url
+      - name
+      - price
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название продукта
+          example: Молоко
+        category_id:
+          type: integer
+          description: Группа товара
+          example: 4
+        description:
+          type: string
+          description: Описание продукта
+          example: Очень вкусное и свежее молоко
+        price:
+          type: number
+          description: Цена товара после применения скидки
+          format: decimal
+          example: 1.99
+        image_url:
+          type: string
+          description: Изображение продукта
+          example: path/images/moloko.png
+        discount_id:
+          type: integer
+          description: Идентификатор доставки
+          example: 2
+        count_of_warehouse:
+          type: integer
+          description: Количество товара на складе
+          example: 1000
+    product:
+      required:
+      - category_id
+      - description
+      - discount_id
+      - image_url
+      - name
+      - price
+      - product_id
+      type: object
+      properties:
+        product_id:
+          type: integer
+          description: Идентификатор товара
+          example: 7
+        name:
+          type: string
+          description: Название продукта
+          example: Молоко
+        category_id:
+          type: integer
+          description: Группа товара
+          example: 4
+        description:
+          type: string
+          description: Описание продукта
+          example: Очень вкусное и свежее молоко
+        price:
+          type: number
+          description: Цена товара после применения скидки
+          format: decimal
+          example: 1.99
+        image_url:
+          type: string
+          description: Изображение продукта
+          example: path/images/moloko.png
+        discount_id:
+          type: integer
+          description: Идентификатор доставки
+          example: 2
+    InventoryItem:
+      required:
+      - id
+      - manufacturer
+      - name
+      - releaseDate
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        name:
+          type: string
+          example: Widget Adapter
+        releaseDate:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+        manufacturer:
+          $ref: '#/components/schemas/Manufacturer'
+    Manufacturer:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          example: ACME Corporation
+        homePage:
+          type: string
+          format: url
+          example: https://www.acme-corp.com
+        phone:
+          type: string
+          example: 408-867-5309
+    inline_response_201:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+    profile_body:
+      required:
+      - address
+      - full_name
+      - phone
+      type: object
+      properties:
+        full_name:
+          type: string
+          description: ФИО пользователя
+          example: Ианов Иван Иванович
+        phone:
+          type: string
+          description: Телефон пользователя
+          example: +375297896524
+        address:
+          type: string
+          description: Адресс пользователя
+          example: "ул. Красная, д. 5, кв. 43"
+    inline_response_200:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        full_name:
+          type: string
+          example: Иванов Иван Иванович
+        role_id:
+          type: integer
+          example: 4
+        email:
+          type: string
+          example: ivanov.ivan2009@gmail.com
+        password_hash:
+          type: string
+          example: wewqe823893ajsdj82823uadsnad23809
+        phone:
+          type: string
+          example: +375294789632
+        address:
+          type: string
+          example: "ул. Наумова, д. 3, кв. 41"
+        created_at:
+          type: string
+          example: 2025-03-01T12:11:36.461531Z
+    login_body:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+          description: Логин пользователя
+          example: maks_dvornik2001@mail.ru
+        password:
+          type: string
+          description: Пароль пользователя
+          format: password
+          example: password007
+    inline_response_200_1:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Bearer Token для аутентификации
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjEyMzQiLCJ1c2VybmFtZSI6ImJpcnNjaG5lcnNvZXZfaGVsbG9fc2VjdXJpdHkiLCJyb2xlIjoidXNlciJ9.cZL6FJ2EKzK4gSKpPVo5v6poE1T9m3MxoA3on8RHkJ2I
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
