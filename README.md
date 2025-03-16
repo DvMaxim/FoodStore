@@ -15,8 +15,9 @@
 Физическая модель вышеупомянутой БД изображена на [схеме](https://github.com/DvMaxim/FoodStore/blob/master/DB/FoodStore_physical_model.png).
 
 ## API
-Докуметация API для работы с проектом представлена в [файле](https://github.com/DvMaxim/FoodStore/blob/master/API/API_Swagger.yml) дополнительно ознакомится можно прейдя по сслыке: https://app.swaggerhub.com/apis/MaximDvornik/FoodStore/1.0.0
-Общее описание работы с [OpenAPI](https://github.com/docops-hq/learnapidoc-ru/blob/master/openAPI-specification/README.md)
+Докуметация API для работы с проектом представлена в [файле](https://github.com/DvMaxim/FoodStore/blob/master/API/API_Swagger.yaml).
+Дополнительно ознакомится можно прейдя по сслыке: https://app.swaggerhub.com/apis/MaximDvornik/FoodStore/1.0.0
+Общее описание работы с [OpenAPI](https://github.com/docops-hq/learnapidoc-ru/blob/master/openAPI-specification/README.md).
 
 ## Описание Кafka
 [Kafka](https://github.com/DvMaxim/FoodStore/blob/master/Kafka/kafka.xlsx) позволяет эффективно организовать взаимодействие сервисов FoodStore, обеспечивая надёжную обработку данных.
